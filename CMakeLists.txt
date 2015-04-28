@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 2.8)
 project(DLoopDetector)
 
-option(BUILD_DemoBRIEF  "Build demo application with BRIEF features" OFF)
-option(BUILD_DemoSURF   "Build demo application with SURF features"  OFF)
+option(BUILD_DemoBRIEF  "Build demo application with BRIEF features" ON)
+option(BUILD_DemoSURF   "Build demo application with SURF features"  ON)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/.cmake")
 
 set(HDRS
   include/DLoopDetector/DLoopDetector.h         include/DLoopDetector/TemplatedLoopDetector.h)
@@ -11,16 +12,16 @@ find_package(OpenCV REQUIRED)
 find_package(DLib REQUIRED)
 find_package(DBoW2 REQUIRED)
 
-include_directories(include/DLoopDetector/ ${OpenCV_INCLUDE_DIRS} ${DLib_INCLUDE_DIRS} ${DBoW2_INCLUDE_DIRS})
+include_directories(include/DLoopDetector/ ${OpenCV_INCLUDE_DIRS} ${DLIB_INCLUDE_DIRS} ${DBOW2_INCLUDE_DIRS})
 
 if(BUILD_DemoBRIEF)
   add_executable(demo_brief demo/demo_brief.cpp)
-  target_link_libraries(demo_brief ${OpenCV_LIBS} ${DLib_LIBS} ${DBoW2_LIBS})
+  target_link_libraries(demo_brief ${OpenCV_LIBS} ${DLIB_LIBRARIES} ${DBOW2_LIBRARIES})
 endif(BUILD_DemoBRIEF)
 
 if(BUILD_DemoSURF)
   add_executable(demo_surf demo/demo_surf.cpp)
-  target_link_libraries(demo_surf ${OpenCV_LIBS} ${DLib_LIBS} ${DBoW2_LIBS})
+  target_link_libraries(demo_surf ${OpenCV_LIBS} ${DLIB_LIBRARIES} ${DBOW2_LIBRARIES})
 endif(BUILD_DemoSURF)
 
 if(BUILD_DemoBRIEF OR BUILD_DemoSURF)
