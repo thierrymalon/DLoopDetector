@@ -17,14 +17,14 @@
 
 #include <opencv/cv.h>
 
-#include "TemplatedVocabulary.h"
-#include "TemplatedDatabase.h"
-#include "QueryResults.h"
-#include "BowVector.h"
+#include <DBoW2/TemplatedVocabulary.h>
+#include <DBoW2/TemplatedDatabase.h>
+#include <DBoW2/QueryResults.h>
+#include <DBoW2/BowVector.h>
 
-#include "DUtils.h"
-#include "DUtilsCV.h"
-#include "DVision.h"
+#include <DUtils/DUtils.h>
+#include <DUtilsCV/DUtilsCV.h>
+#include <DVision/DVision.h>
 
 using namespace std;
 using namespace DUtils;
