@@ -59,7 +59,7 @@ enum DetectionStatus
   LOW_NSS_FACTOR,
   /// Scores (or NS Scores) were below the alpha threshold
   LOW_SCORES,
-  /// Not enough matches to create groups  
+  /// Not enough matches to create groups
   NO_GROUPS,
   /// Not enough temporary consistent matches (k)
   NO_TEMPORAL_CONSISTENCY,
@@ -74,9 +74,9 @@ struct DetectionResult
   DetectionStatus status;
   /// Query id
   EntryId query;
-  /// Matched id if loop detected, otherwise, best candidate 
+  /// Matched id if loop detected, otherwise, best candidate
   EntryId match;
-  
+
   /**
    * Checks if the loop was detected
    * @return true iff a loop was detected
@@ -94,7 +94,7 @@ template<class TDescriptor, class F>
 class TemplatedLoopDetector
 {
 public:
-  
+
   /// Parameters to create a loop detector
   struct Parameters
   {
@@ -102,9 +102,9 @@ public:
     int image_rows;
     /// Width of expected images
     int image_cols;
-    
+
     // Main loop detector parameters
-    
+
     /// Use normalized similarity score?
     bool use_nss;
     /// Alpha threshold
@@ -115,26 +115,26 @@ public:
     GeometricalCheck geom_check;
     /// If using direct index for geometrical checking, direct index levels
     int di_levels;
-    
+
     // These are less deciding parameters of the system
-    
+
     /// Distance between entries to be consider a match
     int dislocal;
     /// Max number of results from db queries to consider
     int max_db_results;
-    /// Min raw score between current entry and previous one to consider a match 
+    /// Min raw score between current entry and previous one to consider a match
     float min_nss_factor;
     /// Min number of close matches to consider some of them
-    int min_matches_per_group; 
+    int min_matches_per_group;
     /// Max separation between matches to consider them of the same group
-    int max_intragroup_gap; 
+    int max_intragroup_gap;
     /// Max separation between groups of matches to consider them consistent
     int max_distance_between_groups;
     /// Max separation between two queries to consider them consistent
-    int max_distance_between_queries; 
-  
+    int max_distance_between_queries;
+
     // These are for the RANSAC to compute the F
-    
+
     /// Min number of inliers when computing a fundamental matrix
     int min_Fpoints;
     /// Max number of iterations of RANSAC
@@ -143,33 +143,33 @@ public:
     double ransac_probability;
     /// Max reprojection error of fundamental matrices
     double max_reprojection_error;
-    
+
     // This is to compute correspondences
-    
+
     /// Max value of the neighbour-ratio of accepted correspondences
     double max_neighbor_ratio;
-  
+
     /**
      * Creates parameters by default
-     */ 
+     */
     Parameters();
-    
+
     /**
      * Creates parameters by default
      * @param height image height
      * @param width image width
-     * @param frequency set the value of some parameters according to the 
-     *   expected working frequency (Hz) 
+     * @param frequency set the value of some parameters according to the
+     *   expected working frequency (Hz)
      * @param nss use normalized similarity score
      * @param _alpha alpha parameter
      * @param _k k parameter (number of temporary consistent matches)
      * @param geom type of geometrical check
      * @param dilevels direct index levels when geom == GEOM_DI
-     */ 
+     */
     Parameters(int height, int width, float frequency = 1, bool nss = true,
-      float _alpha = 0.3, int _k = 3, 
+      float _alpha = 0.3, int _k = 3,
       GeometricalCheck geom = GEOM_DI, int dilevels = 0);
-      
+
   private:
     /**
      * Sets some parameters according to the frequency
@@ -177,7 +177,7 @@ public:
      */
     void set(float frequency);
   };
-  
+
 public:
 
   /**
@@ -186,14 +186,14 @@ public:
   TemplatedLoopDetector(const Parameters &params = Parameters());
 
   /**
-   * Creates a loop detector with the given parameters and with a BoW2 database 
+   * Creates a loop detector with the given parameters and with a BoW2 database
    * with the given vocabulary
    * @param voc vocabulary
    * @param params loop detector parameters
    */
   TemplatedLoopDetector(const TemplatedVocabulary<TDescriptor, F> &voc,
     const Parameters &params = Parameters());
-  
+
   /**
    * Creates a loop detector with a copy of the given database, but clearing
    * its contents
@@ -217,19 +217,19 @@ public:
    * Destructor
    */
   virtual ~TemplatedLoopDetector(void);
-  
+
   /**
    * Retrieves a reference to the database used by the loop detector
    * @return const reference to database
    */
   inline const TemplatedDatabase<TDescriptor, F>& getDatabase() const;
-  
+
   /**
    * Retrieves a reference to the vocabulary used by the loop detector
    * @return const reference to vocabulary
    */
   inline const TemplatedVocabulary<TDescriptor, F>& getVocabulary() const;
-  
+
   /**
    * Sets the database to use. The contents of the database and the detector
    * entries are cleared
@@ -238,13 +238,13 @@ public:
    */
   template<class T>
   void setDatabase(const T &db);
-  
+
   /**
    * Sets a new DBoW2 database created from the given vocabulary
    * @param voc vocabulary to copy
    */
   void setVocabulary(const TemplatedVocabulary<TDescriptor, F>& voc);
-  
+
   /**
    * Allocates some memory for the first entries
    * @param nentries number of expected entries
@@ -260,9 +260,22 @@ public:
    * @param match (out) match or failing information
    * @return true iff there was match
    */
-  bool detectLoop(const std::vector<cv::KeyPoint> &keys, 
+  bool detectLoop(const std::vector<cv::KeyPoint> &keys,
     const std::vector<TDescriptor> &descriptors,
     DetectionResult &match);
+
+  /**
+   * Adds the given tuple <keys, descriptors, current_t> to the database
+   * and returns the match if any
+   * @param keys keypoints of the image
+   * @param descriptors descriptors associated to the given keypoints
+   * @param match (out) match or failing information
+   * @return true iff there was match
+   */
+  bool detectLoopDB(const std::vector<cv::KeyPoint> &keys,
+    const std::vector<TDescriptor> &descriptors,
+    DetectionResult &match);
+
 
   /**
    * Resets the detector and clears the database, such that the next entry
@@ -271,7 +284,7 @@ public:
   inline void clear();
 
 protected:
-  
+
   /// Matching island
   struct tIsland
   {
@@ -281,24 +294,24 @@ protected:
     EntryId last;
     /// Island score
     double score; // score of island
-    
+
     /// Entry of the island with the highest score
     EntryId best_entry; // id and score of the entry with the highest score
     /// Highest single score in the island
     double best_score;  // in the island
-    
+
     /**
      * Creates an empty island
      */
     tIsland(){}
-    
+
     /**
      * Creates an island
      * @param f first entry
      * @param l last entry
      */
     tIsland(EntryId f, EntryId l): first(f), last(l){}
-    
+
     /**
      * Creates an island
      * @param f first entry
@@ -306,7 +319,7 @@ protected:
      * @param s island score
      */
     tIsland(EntryId f, EntryId l, double s): first(f), last(l), score(s){}
-    
+
     /**
      * Says whether this score is less than the score of another island
      * @param b
@@ -316,7 +329,7 @@ protected:
     {
       return this->score < b.score;
     }
-    
+
     /**
      * Says whether this score is greater than the score of another island
      * @param b
@@ -326,8 +339,8 @@ protected:
     {
       return this->score > b.score;
     }
-    
-    /** 
+
+    /**
      * Returns true iff a > b
      * This function is used to sort in descending order
      * @param a
@@ -338,7 +351,7 @@ protected:
     {
       return a.score > b.score;
     }
-        
+
     /**
      * Returns true iff entry ids of a are less then those of b.
      * Assumes there is no overlap between the islands
@@ -350,13 +363,13 @@ protected:
     {
       return a.first < b.first;
     }
-    
+
     /**
      * Returns the length of the island
      * @return length of island
      */
     inline int length() const { return last - first + 1; }
-    
+
     /**
      * Returns a printable version of the island
      * @return printable island
@@ -369,7 +382,7 @@ protected:
       return ss.str();
     }
   };
-  
+
   /// Temporal consistency window
   struct tTemporalWindow
   {
@@ -379,16 +392,16 @@ protected:
     EntryId last_query_id;
     /// Number of consistent entries in the window
     int nentries;
-    
+
     /**
      * Creates an empty temporal window
      */
     tTemporalWindow(): nentries(0) {}
   };
-  
-  
+
+
 protected:
-  
+
   /**
    * Removes from q those results whose score is lower than threshold
    * (that should be alpha * ns_factor)
@@ -396,14 +409,14 @@ protected:
    * @param threshold min value of the resting results
    */
   void removeLowScores(QueryResults &q, double threshold) const;
-  
+
   /**
    * Returns the islands of the given matches in ascending order of entry ids
-   * @param q 
+   * @param q
    * @param islands (out) computed islands
    */
   void computeIslands(QueryResults &q, vector<tIsland> &islands) const;
-  
+
   /**
    * Returns the score of the island composed of the entries of q whose indices
    * are in [i_first, i_last] (both included)
@@ -412,17 +425,17 @@ protected:
    * @param i_last last index of q of the island
    * @return island score
    */
-  double calculateIslandScore(const QueryResults &q, unsigned int i_first, 
+  double calculateIslandScore(const QueryResults &q, unsigned int i_first,
     unsigned int i_last) const;
 
   /**
-   * Updates the temporal window by adding the given match <island, id>, such 
+   * Updates the temporal window by adding the given match <island, id>, such
    * that the window will contain only those islands which are consistent
    * @param matched_island
    * @param entry_id
    */
   void updateTemporalWindow(const tIsland &matched_island, EntryId entry_id);
-  
+
   /**
    * Returns the number of consistent islands in the temporal window
    * @return number of temporal consistent islands
@@ -431,23 +444,23 @@ protected:
   {
     return m_window.nentries;
   }
-  
+
   /**
-   * Check if an old entry is geometrically consistent (by calculating a 
+   * Check if an old entry is geometrically consistent (by calculating a
    * fundamental matrix) with the given set of keys and descriptors
    * @param old_entry entry id of the stored image to check
    * @param keys current keypoints
    * @param descriptors current descriptors associated to the given keypoints
-   * @param curvec feature vector of the current entry 
+   * @param curvec feature vector of the current entry
    */
-  bool isGeometricallyConsistent_DI(EntryId old_entry, 
-    const std::vector<cv::KeyPoint> &keys, 
-    const std::vector<TDescriptor> &descriptors, 
+  bool isGeometricallyConsistent_DI(EntryId old_entry,
+    const std::vector<cv::KeyPoint> &keys,
+    const std::vector<TDescriptor> &descriptors,
     const FeatureVector &curvec) const;
-  
+
   /**
-   * Checks if an old entry is geometrically consistent (by using FLANN and 
-   * computing an essential matrix by using the neighbour ratio 0.6) 
+   * Checks if an old entry is geometrically consistent (by using FLANN and
+   * computing an essential matrix by using the neighbour ratio 0.6)
    * with the given set of keys and descriptors
    * @param old_entry entry id of the stored image to check
    * @param keys current keypoints
@@ -455,7 +468,7 @@ protected:
    * @param flann_structure flann structure with the descriptors of the current entry
    */
   bool isGeometricallyConsistent_Flann(EntryId old_entry,
-    const std::vector<cv::KeyPoint> &keys, 
+    const std::vector<cv::KeyPoint> &keys,
     const std::vector<TDescriptor> &descriptors,
     cv::FlannBasedMatcher &flann_structure) const;
 
@@ -464,12 +477,12 @@ protected:
    * @param descriptors
    * @param flann_structure (out) flann matcher
    */
-  void getFlannStructure(const std::vector<TDescriptor> &descriptors, 
+  void getFlannStructure(const std::vector<TDescriptor> &descriptors,
     cv::FlannBasedMatcher &flann_structure) const;
 
   /**
    * Check if an old entry is geometrically consistent (by calculating a
-   * fundamental matrix from left-right correspondences) with the given set 
+   * fundamental matrix from left-right correspondences) with the given set
    * of keys and descriptors,
    * without using the direct index
    * @param old_keys keys of old entry
@@ -481,11 +494,11 @@ protected:
     const std::vector<cv::KeyPoint> &old_keys,
     const std::vector<TDescriptor> &old_descriptors,
     const std::vector<cv::KeyPoint> &cur_keys,
-    const std::vector<TDescriptor> &cur_descriptors) const; 
+    const std::vector<TDescriptor> &cur_descriptors) const;
 
   /**
    * Calculate the matches between the descriptors A[i_A] and the descriptors
-   * B[i_B]. Applies a left-right matching without neighbour ratio 
+   * B[i_B]. Applies a left-right matching without neighbour ratio
    * @param A set A of descriptors
    * @param i_A only descriptors A[i_A] will be checked
    * @param B set B of descriptors
@@ -493,40 +506,41 @@ protected:
    * @param i_match_A (out) indices of descriptors matched (s.t. A[i_match_A])
    * @param i_match_B (out) indices of descriptors matched (s.t. B[i_match_B])
    */
-  void getMatches_neighratio(const std::vector<TDescriptor> &A, 
+  void getMatches_neighratio(const std::vector<TDescriptor> &A,
     const vector<unsigned int> &i_A, const vector<TDescriptor> &B,
     const vector<unsigned int> &i_B,
     vector<unsigned int> &i_match_A, vector<unsigned int> &i_match_B) const;
 
-protected:
+public:
+//protected:
 
   /// Database
   // The loop detector stores its own copy of the database
   TemplatedDatabase<TDescriptor,F> *m_database;
-  
+
   /// KeyPoints of images
   vector<vector<cv::KeyPoint> > m_image_keys;
-  
+
   /// Descriptors of images
   vector<vector<TDescriptor> > m_image_descriptors;
-  
+
   /// Last bow vector added to database
   BowVector m_last_bowvec;
-  
+
   /// Temporal consistency window
   tTemporalWindow m_window;
-  
+
   /// Parameters of loop detector
   Parameters m_params;
-  
+
   /// To compute the fundamental matrix
   DVision::FSolver m_fsolver;
-  
+
 };
 
 // --------------------------------------------------------------------------
 
-template <class TDescriptor, class F> 
+template <class TDescriptor, class F>
 TemplatedLoopDetector<TDescriptor,F>::Parameters::Parameters():
   use_nss(true), alpha(0.3), k(4), geom_check(GEOM_DI), di_levels(0)
 {
@@ -535,9 +549,9 @@ TemplatedLoopDetector<TDescriptor,F>::Parameters::Parameters():
 
 // --------------------------------------------------------------------------
 
-template <class TDescriptor, class F> 
+template <class TDescriptor, class F>
 TemplatedLoopDetector<TDescriptor,F>::Parameters::Parameters
-  (int height, int width, float frequency, bool nss, float _alpha, 
+  (int height, int width, float frequency, bool nss, float _alpha,
   int _k, GeometricalCheck geom, int dilevels)
   : image_rows(height), image_cols(width), use_nss(nss), alpha(_alpha), k(_k),
     geom_check(geom), di_levels(dilevels)
@@ -547,7 +561,7 @@ TemplatedLoopDetector<TDescriptor,F>::Parameters::Parameters
 
 // --------------------------------------------------------------------------
 
-template <class TDescriptor, class F> 
+template <class TDescriptor, class F>
 void TemplatedLoopDetector<TDescriptor,F>::Parameters::set(float f)
 {
   dislocal = 20 * f;
@@ -556,13 +570,13 @@ void TemplatedLoopDetector<TDescriptor,F>::Parameters::set(float f)
   min_matches_per_group = f;
   max_intragroup_gap = 3 * f;
   max_distance_between_groups = 3 * f;
-  max_distance_between_queries = 2 * f; 
+  max_distance_between_queries = 2 * f;
 
   min_Fpoints = 12;
   max_ransac_iterations = 500;
   ransac_probability = 0.99;
   max_reprojection_error = 2.0;
-  
+
   max_neighbor_ratio = 0.6;
 }
 
@@ -580,11 +594,11 @@ TemplatedLoopDetector<TDescriptor,F>::TemplatedLoopDetector
 template<class TDescriptor, class F>
 TemplatedLoopDetector<TDescriptor,F>::TemplatedLoopDetector
   (const TemplatedVocabulary<TDescriptor, F> &voc, const Parameters &params)
-  : m_params(params) 
+  : m_params(params)
 {
-  m_database = new TemplatedDatabase<TDescriptor, F>(voc, 
+  m_database = new TemplatedDatabase<TDescriptor, F>(voc,
     params.geom_check == GEOM_DI, params.di_levels);
-  
+
   m_fsolver.setImageSize(params.image_cols, params.image_rows);
 }
 
@@ -595,7 +609,7 @@ void TemplatedLoopDetector<TDescriptor,F>::setVocabulary
   (const TemplatedVocabulary<TDescriptor, F>& voc)
 {
   delete m_database;
-  m_database = new TemplatedDatabase<TDescriptor, F>(voc, 
+  m_database = new TemplatedDatabase<TDescriptor, F>(voc,
     m_params.geom_check == GEOM_DI, m_params.di_levels);
 }
 
@@ -608,7 +622,7 @@ TemplatedLoopDetector<TDescriptor, F>::TemplatedLoopDetector
 {
   m_database = new TemplatedDatabase<TDescriptor, F>(db.getVocabulary(),
     params.geom_check == GEOM_DI, params.di_levels);
-  
+
   m_fsolver.setImageSize(params.image_cols, params.image_rows);
 }
 
@@ -622,7 +636,7 @@ TemplatedLoopDetector<TDescriptor, F>::TemplatedLoopDetector
 {
   m_database = new T(db);
   m_database->clear();
-  
+
   m_fsolver.setImageSize(params.image_cols, params.image_rows);
 }
 
@@ -653,13 +667,13 @@ void TemplatedLoopDetector<TDescriptor,F>::allocate
   (int nentries, int nkeys)
 {
   const int sz = (const int)m_image_keys.size();
-  
+
   if(sz < nentries)
   {
     m_image_keys.resize(nentries);
     m_image_descriptors.resize(nentries);
   }
-  
+
   if(nkeys > 0)
   {
     for(int i = sz; i < nentries; ++i)
@@ -668,14 +682,14 @@ void TemplatedLoopDetector<TDescriptor,F>::allocate
       m_image_descriptors[i].reserve(nkeys);
     }
   }
-  
+
   m_database->allocate(nentries, nkeys);
 }
 
 // --------------------------------------------------------------------------
 
 template<class TDescriptor, class F>
-inline const TemplatedDatabase<TDescriptor, F>& 
+inline const TemplatedDatabase<TDescriptor, F>&
 TemplatedLoopDetector<TDescriptor, F>::getDatabase() const
 {
   return *m_database;
@@ -684,7 +698,7 @@ TemplatedLoopDetector<TDescriptor, F>::getDatabase() const
 // --------------------------------------------------------------------------
 
 template<class TDescriptor, class F>
-inline const TemplatedVocabulary<TDescriptor, F>& 
+inline const TemplatedVocabulary<TDescriptor, F>&
 TemplatedLoopDetector<TDescriptor, F>::getVocabulary() const
 {
   return m_database->getVocabulary();
@@ -694,16 +708,16 @@ TemplatedLoopDetector<TDescriptor, F>::getVocabulary() const
 
 template<class TDescriptor, class F>
 bool TemplatedLoopDetector<TDescriptor, F>::detectLoop(
-  const std::vector<cv::KeyPoint> &keys, 
+  const std::vector<cv::KeyPoint> &keys,
   const std::vector<TDescriptor> &descriptors,
   DetectionResult &match)
 {
   EntryId entry_id = m_database->size();
   match.query = entry_id;
-  
+
   BowVector bowvec;
   FeatureVector featvec;
-  
+
   if(m_params.geom_check == GEOM_DI)
     m_database->getVocabulary()->transform(descriptors, bowvec, featvec,
       m_params.di_levels);
@@ -719,55 +733,55 @@ bool TemplatedLoopDetector<TDescriptor, F>::detectLoop(
   else
   {
     int max_id = (int)entry_id - m_params.dislocal;
-    
+
     QueryResults qret;
     m_database->query(bowvec, qret, m_params.max_db_results, max_id);
 
     // update database
     m_database->add(bowvec, featvec); // returns entry_id
-    
+
     if(!qret.empty())
     {
       // factor to compute normalized similarity score, if necessary
       double ns_factor = 1.0;
-      
+
       if(m_params.use_nss)
       {
         ns_factor = m_database->getVocabulary()->score(bowvec, m_last_bowvec);
       }
-      
+
       if(!m_params.use_nss || ns_factor >= m_params.min_nss_factor)
       {
         // scores in qret must be divided by ns_factor to obtain the
         // normalized similarity score, but we can
         // speed this up by moving ns_factor to alpha's
-        
+
         // remove those scores whose nss is lower than alpha
         // (ret is sorted in descending score order now)
         removeLowScores(qret, m_params.alpha * ns_factor);
-        
+
         if(!qret.empty())
         {
           // the best candidate is the one with highest score by now
           match.match = qret[0].Id;
-          
+
           // compute islands
           vector<tIsland> islands;
-          computeIslands(qret, islands); 
+          computeIslands(qret, islands);
           // this modifies qret and changes the score order
-          
+
           // get best island
           if(!islands.empty())
           {
-            const tIsland& island = 
+            const tIsland& island =
               *std::max_element(islands.begin(), islands.end());
-            
+
             // check temporal consistency of this island
             updateTemporalWindow(island, entry_id);
-            
+
             // get the best candidate (maybe match)
             match.match = island.best_entry;
-            
+
             if(getConsistentEntries() > m_params.k)
             {
               // candidate loop detected
@@ -777,29 +791,29 @@ bool TemplatedLoopDetector<TDescriptor, F>::detectLoop(
               if(m_params.geom_check == GEOM_DI)
               {
                 // all the DI stuff is implicit in the database
-                detection = isGeometricallyConsistent_DI(island.best_entry, 
+                detection = isGeometricallyConsistent_DI(island.best_entry,
                   keys, descriptors, featvec);
               }
               else if(m_params.geom_check == GEOM_FLANN)
               {
                 cv::FlannBasedMatcher flann_structure;
                 getFlannStructure(descriptors, flann_structure);
-                            
-                detection = isGeometricallyConsistent_Flann(island.best_entry, 
+
+                detection = isGeometricallyConsistent_Flann(island.best_entry,
                   keys, descriptors, flann_structure);
               }
               else if(m_params.geom_check == GEOM_EXHAUSTIVE)
-              { 
+              {
                 detection = isGeometricallyConsistent_Exhaustive(
-                  m_image_keys[island.best_entry], 
+                  m_image_keys[island.best_entry],
                   m_image_descriptors[island.best_entry],
-                  keys, descriptors);            
+                  keys, descriptors);
               }
               else // GEOM_NONE, accept the match
               {
                 detection = true;
               }
-              
+
               if(detection)
               {
                 match.status = LOOP_DETECTED;
@@ -808,13 +822,13 @@ bool TemplatedLoopDetector<TDescriptor, F>::detectLoop(
               {
                 match.status = NO_GEOMETRICAL_CONSISTENCY;
               }
-              
+
             } // if enough temporal matches
             else
             {
               match.status = NO_TEMPORAL_CONSISTENCY;
             }
-            
+
           } // if there is some island
           else
           {
@@ -849,7 +863,133 @@ bool TemplatedLoopDetector<TDescriptor, F>::detectLoop(
     m_image_keys[entry_id] = keys;
     m_image_descriptors[entry_id] = descriptors;
   }
-  
+
+  // store this bowvec if we are going to use it in next iteratons
+  if(m_params.use_nss && (int)entry_id + 1 > m_params.dislocal)
+  {
+    m_last_bowvec = bowvec;
+  }
+
+  return match.detection();
+}
+
+// --------------------------------------------------------------------------
+
+template<class TDescriptor, class F>
+bool TemplatedLoopDetector<TDescriptor, F>::detectLoopDB(
+  const std::vector<cv::KeyPoint> &keys,
+  const std::vector<TDescriptor> &descriptors,
+  DetectionResult &match)
+{
+  EntryId entry_id = m_database->size();
+  match.query = entry_id;
+
+  BowVector bowvec;
+  FeatureVector featvec;
+
+  if(m_params.geom_check == GEOM_DI)
+    m_database->getVocabulary()->transform(descriptors, bowvec, featvec,
+      m_params.di_levels);
+  else
+    m_database->getVocabulary()->transform(descriptors, bowvec);
+
+  int max_id = (int)entry_id - m_params.dislocal;
+
+  QueryResults qret;
+  m_database->query(bowvec, qret, 10, -1);//m_params.max_db_results, max_id);
+
+  cout << qret << endl;
+
+  if(!qret.empty())
+  {
+    // factor to compute normalized similarity score, if necessary
+    double ns_factor = 1.0;
+
+    if(m_params.use_nss)
+    {
+      ns_factor = m_database->getVocabulary()->score(bowvec, m_last_bowvec);
+    }
+
+    if(!m_params.use_nss || ns_factor >= m_params.min_nss_factor)
+    {
+      // scores in qret must be divided by ns_factor to obtain the
+      // normalized similarity score, but we can
+      // speed this up by moving ns_factor to alpha's
+
+      // remove those scores whose nss is lower than alpha
+      // (ret is sorted in descending score order now)
+      removeLowScores(qret, m_params.alpha * ns_factor);
+
+      if(!qret.empty())
+      {
+        // the best candidate is the one with highest score by now
+        match.match = qret[0].Id;
+
+        bool detection;
+
+        if(m_params.geom_check == GEOM_DI)
+        {
+          // all the DI stuff is implicit in the database
+          detection = isGeometricallyConsistent_DI(match.match,
+              keys, descriptors, featvec);
+        }
+        else if(m_params.geom_check == GEOM_FLANN)
+        {
+          cv::FlannBasedMatcher flann_structure;
+          getFlannStructure(descriptors, flann_structure);
+
+          detection = isGeometricallyConsistent_Flann(match.match,
+            keys, descriptors, flann_structure);
+        }
+        else if(m_params.geom_check == GEOM_EXHAUSTIVE)
+        {
+          detection = isGeometricallyConsistent_Exhaustive(
+            m_image_keys[match.match],
+            m_image_descriptors[match.match],
+            keys, descriptors);
+        }
+        else // GEOM_NONE, accept the match
+        {
+          detection = true;
+        }
+
+        if(detection)
+        {
+          match.status = LOOP_DETECTED;
+        }
+        else
+        {
+          match.status = NO_GEOMETRICAL_CONSISTENCY;
+        }
+      } // if !qret empty after removing low scores
+      else
+      {
+        match.status = LOW_SCORES;
+      }
+    } // if (ns_factor > min normal score)
+    else
+    {
+      match.status = LOW_NSS_FACTOR;
+    }
+  } // if(!qret.empty())
+  else
+  {
+    match.status = NO_DB_RESULTS;
+  }
+
+  // update record
+  // m_image_keys and m_image_descriptors have the same length
+  if(m_image_keys.size() == entry_id)
+  {
+    m_image_keys.push_back(keys);
+    m_image_descriptors.push_back(descriptors);
+  }
+  else
+  {
+    m_image_keys[entry_id] = keys;
+    m_image_descriptors[entry_id] = descriptors;
+  }
+
   // store this bowvec if we are going to use it in next iteratons
   if(m_params.use_nss && (int)entry_id + 1 > m_params.dislocal)
   {
@@ -875,7 +1015,7 @@ void TemplatedLoopDetector<TDescriptor, F>::computeIslands
   (QueryResults &q, vector<tIsland> &islands) const
 {
   islands.clear();
-  
+
   if(q.size() == 1)
   {
     islands.push_back(tIsland(q[0].Id, q[0].Id, calculateIslandScore(q, 0, 0)));
@@ -886,16 +1026,16 @@ void TemplatedLoopDetector<TDescriptor, F>::computeIslands
   {
     // sort query results in ascending order of ids
     std::sort(q.begin(), q.end(), Result::ltId);
-    
+
     // create long enough islands
     QueryResults::const_iterator dit = q.begin();
     int first_island_entry = dit->Id;
     int last_island_entry = dit->Id;
-    
+
     // these are indices of q
     unsigned int i_first = 0;
     unsigned int i_last = 0;
-    
+
     double best_score = dit->Score;
     EntryId best_entry = dit->Id;
 
@@ -921,11 +1061,11 @@ void TemplatedLoopDetector<TDescriptor, F>::computeIslands
         {
           islands.push_back( tIsland(first_island_entry, last_island_entry,
             calculateIslandScore(q, i_first, i_last)) );
-          
+
           islands.back().best_score = best_score;
           islands.back().best_entry = best_entry;
         }
-        
+
         // prepare next island
         first_island_entry = last_island_entry = dit->Id;
         i_first = i_last = idx;
@@ -934,17 +1074,17 @@ void TemplatedLoopDetector<TDescriptor, F>::computeIslands
       }
     }
     // add last island
-    if(last_island_entry - first_island_entry + 1 >= 
+    if(last_island_entry - first_island_entry + 1 >=
       m_params.min_matches_per_group)
     {
       islands.push_back( tIsland(first_island_entry, last_island_entry,
         calculateIslandScore(q, i_first, i_last)) );
-        
+
       islands.back().best_score = best_score;
       islands.back().best_entry = best_entry;
     }
   }
-  
+
 }
 
 // --------------------------------------------------------------------------
@@ -967,7 +1107,7 @@ void TemplatedLoopDetector<TDescriptor, F>::updateTemporalWindow
 {
   // if m_window.nentries > 0, island > m_window.last_matched_island and
   // entry_id > m_window.last_query_id hold
-  
+
   if(m_window.nentries == 0 || int(entry_id - m_window.last_query_id)
     > m_params.max_distance_between_queries)
   {
@@ -979,7 +1119,7 @@ void TemplatedLoopDetector<TDescriptor, F>::updateTemporalWindow
     EntryId a2 = m_window.last_matched_island.last;
     EntryId b1 = matched_island.first;
     EntryId b2 = matched_island.last;
-    
+
     bool fit = (b1 <= a1 && a1 <= b2) || (a1 <= b1 && b1 <= a2);
 
     if(!fit)
@@ -987,14 +1127,14 @@ void TemplatedLoopDetector<TDescriptor, F>::updateTemporalWindow
       int d1 = (int)a1 - (int)b2;
       int d2 = (int)b1 - (int)a2;
       int gap = (d1 > d2 ? d1 : d2);
-      
+
       fit = (gap <= m_params.max_distance_between_groups);
     }
-    
+
     if(fit) m_window.nentries++;
     else m_window.nentries = 1;
   }
-  
+
   m_window.last_matched_island = matched_island;
   m_window.last_query_id = entry_id;
 }
@@ -1003,40 +1143,40 @@ void TemplatedLoopDetector<TDescriptor, F>::updateTemporalWindow
 
 template<class TDescriptor, class F>
 bool TemplatedLoopDetector<TDescriptor, F>::isGeometricallyConsistent_DI(
-  EntryId old_entry, const std::vector<cv::KeyPoint> &keys, 
-  const std::vector<TDescriptor> &descriptors, 
+  EntryId old_entry, const std::vector<cv::KeyPoint> &keys,
+  const std::vector<TDescriptor> &descriptors,
   const FeatureVector &bowvec) const
 {
   const FeatureVector &oldvec = m_database->retrieveFeatures(old_entry);
-  
+
   // for each word in common, get the closest descriptors
-  
+
   vector<unsigned int> i_old, i_cur;
-  
-  FeatureVector::const_iterator old_it, cur_it; 
+
+  FeatureVector::const_iterator old_it, cur_it;
   const FeatureVector::const_iterator old_end = oldvec.end();
   const FeatureVector::const_iterator cur_end = bowvec.end();
-  
+
   old_it = oldvec.begin();
   cur_it = bowvec.begin();
-  
+
   while(old_it != old_end && cur_it != cur_end)
   {
     if(old_it->first == cur_it->first)
     {
-      // compute matches between 
+      // compute matches between
       // features old_it->second of m_image_keys[old_entry] and
       // features cur_it->second of keys
       vector<unsigned int> i_old_now, i_cur_now;
-      
+
       getMatches_neighratio(
-        m_image_descriptors[old_entry], old_it->second, 
-        descriptors, cur_it->second,  
+        m_image_descriptors[old_entry], old_it->second,
+        descriptors, cur_it->second,
         i_old_now, i_cur_now);
-      
+
       i_old.insert(i_old.end(), i_old_now.begin(), i_old_now.end());
       i_cur.insert(i_cur.end(), i_cur_now.begin(), i_cur_now.end());
-      
+
       // move old_it and cur_it forward
       ++old_it;
       ++cur_it;
@@ -1054,34 +1194,34 @@ bool TemplatedLoopDetector<TDescriptor, F>::isGeometricallyConsistent_DI(
       // cur_it = (first element >= old_it.id)
     }
   }
-  
+
   // calculate now the fundamental matrix
   if((int)i_old.size() >= m_params.min_Fpoints)
   {
     vector<cv::Point2f> old_points, cur_points;
-    
+
     // add matches to the vectors to calculate the fundamental matrix
     vector<unsigned int>::const_iterator oit, cit;
     oit = i_old.begin();
     cit = i_cur.begin();
-    
+
     for(; oit != i_old.end(); ++oit, ++cit)
     {
       const cv::KeyPoint &old_k = m_image_keys[old_entry][*oit];
       const cv::KeyPoint &cur_k = keys[*cit];
-      
+
       old_points.push_back(old_k.pt);
       cur_points.push_back(cur_k.pt);
     }
-  
+
     cv::Mat oldMat(old_points.size(), 2, CV_32F, &old_points[0]);
     cv::Mat curMat(cur_points.size(), 2, CV_32F, &cur_points[0]);
-    
-    return m_fsolver.checkFundamentalMat(oldMat, curMat, 
+
+    return m_fsolver.checkFundamentalMat(oldMat, curMat,
       m_params.max_reprojection_error, m_params.min_Fpoints,
       m_params.ransac_probability, m_params.max_ransac_iterations);
   }
-  
+
   return false;
 }
 
@@ -1097,64 +1237,64 @@ isGeometricallyConsistent_Exhaustive(
 {
   vector<unsigned int> i_old, i_cur;
   vector<unsigned int> i_all_old, i_all_cur;
-  
+
   i_all_old.reserve(old_keys.size());
   i_all_cur.reserve(cur_keys.size());
-  
+
   for(unsigned int i = 0; i < old_keys.size(); ++i)
   {
     i_all_old.push_back(i);
   }
-  
+
   for(unsigned int i = 0; i < cur_keys.size(); ++i)
   {
     i_all_cur.push_back(i);
   }
-  
-  getMatches_neighratio(old_descriptors, i_all_old, 
+
+  getMatches_neighratio(old_descriptors, i_all_old,
     cur_descriptors, i_all_cur,  i_old, i_cur);
-  
+
   if((int)i_old.size() >= m_params.min_Fpoints)
   {
     // add matches to the vectors to calculate the fundamental matrix
     vector<unsigned int>::const_iterator oit, cit;
     oit = i_old.begin();
     cit = i_cur.begin();
-    
+
     vector<cv::Point2f> old_points, cur_points;
     old_points.reserve(i_old.size());
     cur_points.reserve(i_cur.size());
-    
+
     for(; oit != i_old.end(); ++oit, ++cit)
     {
       const cv::KeyPoint &old_k = old_keys[*oit];
       const cv::KeyPoint &cur_k = cur_keys[*cit];
-      
+
       old_points.push_back(old_k.pt);
       cur_points.push_back(cur_k.pt);
     }
-  
+
     cv::Mat oldMat(old_points.size(), 2, CV_32F, &old_points[0]);
     cv::Mat curMat(cur_points.size(), 2, CV_32F, &cur_points[0]);
-    
-    return m_fsolver.checkFundamentalMat(oldMat, curMat, 
+
+    return m_fsolver.checkFundamentalMat(oldMat, curMat,
       m_params.max_reprojection_error, m_params.min_Fpoints,
       m_params.ransac_probability, m_params.max_ransac_iterations);
   }
-  
+
   return false;
-} 
+}
 
 // --------------------------------------------------------------------------
 
 template<class TDescriptor, class F>
 void TemplatedLoopDetector<TDescriptor, F>::getFlannStructure(
-  const std::vector<TDescriptor> &descriptors, 
+  const std::vector<TDescriptor> &descriptors,
   cv::FlannBasedMatcher &flann_structure) const
 {
   vector<cv::Mat> features(1);
   F::toMat32F(descriptors, features[0]);
-  
+
   flann_structure.clear();
   flann_structure.add(features);
   flann_structure.train();
@@ -1165,42 +1305,42 @@ void TemplatedLoopDetector<TDescriptor, F>::getFlannStructure(
 template<class TDescriptor, class F>
 bool TemplatedLoopDetector<TDescriptor, F>::isGeometricallyConsistent_Flann
   (EntryId old_entry,
-  const std::vector<cv::KeyPoint> &keys, 
+  const std::vector<cv::KeyPoint> &keys,
   const std::vector<TDescriptor> &descriptors,
   cv::FlannBasedMatcher &flann_structure) const
 {
   vector<unsigned int> i_old, i_cur; // indices of correspondences
-  
+
   const vector<cv::KeyPoint>& old_keys = m_image_keys[old_entry];
   const vector<TDescriptor>& old_descs = m_image_descriptors[old_entry];
   const vector<cv::KeyPoint>& cur_keys = keys;
-  
+
   vector<cv::Mat> queryDescs_v(1);
   F::toMat32F(old_descs, queryDescs_v[0]);
-  
+
   vector<vector<cv::DMatch> > matches;
-  
+
   flann_structure.knnMatch(queryDescs_v[0], matches, 2);
-  
+
   for(int old_idx = 0; old_idx < (int)matches.size(); ++old_idx)
   {
     if(!matches[old_idx].empty())
     {
       int cur_idx = matches[old_idx][0].trainIdx;
       float dist = matches[old_idx][0].distance;
-      
+
       bool ok = true;
       if(matches[old_idx].size() >= 2)
       {
         float dist_ratio = dist / matches[old_idx][1].distance;
         ok = dist_ratio <= m_params.max_neighbor_ratio;
       }
-      
+
       if(ok)
       {
         vector<unsigned int>::iterator cit =
           std::find(i_cur.begin(), i_cur.end(), cur_idx);
-        
+
         if(cit == i_cur.end())
         {
           i_old.push_back(old_idx);
@@ -1217,35 +1357,35 @@ bool TemplatedLoopDetector<TDescriptor, F>::isGeometricallyConsistent_Flann
       }
     }
   }
-  
+
   if((int)i_old.size() >= m_params.min_Fpoints)
   {
     // add matches to the vectors for calculating the fundamental matrix
     vector<unsigned int>::const_iterator oit, cit;
     oit = i_old.begin();
     cit = i_cur.begin();
-    
+
     vector<cv::Point2f> old_points, cur_points;
     old_points.reserve(i_old.size());
     cur_points.reserve(i_cur.size());
-    
+
     for(; oit != i_old.end(); ++oit, ++cit)
     {
       const cv::KeyPoint &old_k = old_keys[*oit];
       const cv::KeyPoint &cur_k = cur_keys[*cit];
-      
+
       old_points.push_back(old_k.pt);
       cur_points.push_back(cur_k.pt);
     }
-    
+
     cv::Mat oldMat(old_points.size(), 2, CV_32F, &old_points[0]);
     cv::Mat curMat(cur_points.size(), 2, CV_32F, &cur_points[0]);
-    
-    return m_fsolver.checkFundamentalMat(oldMat, curMat, 
+
+    return m_fsolver.checkFundamentalMat(oldMat, curMat,
       m_params.max_reprojection_error, m_params.min_Fpoints,
       m_params.ransac_probability, m_params.max_ransac_iterations);
   }
-  
+
   return false;
 }
 
@@ -1255,13 +1395,13 @@ template<class TDescriptor, class F>
 void TemplatedLoopDetector<TDescriptor, F>::getMatches_neighratio(
   const vector<TDescriptor> &A, const vector<unsigned int> &i_A,
   const vector<TDescriptor> &B, const vector<unsigned int> &i_B,
-  vector<unsigned int> &i_match_A, vector<unsigned int> &i_match_B) const 
+  vector<unsigned int> &i_match_A, vector<unsigned int> &i_match_B) const
 {
   i_match_A.resize(0);
   i_match_B.resize(0);
   i_match_A.reserve( min(i_A.size(), i_B.size()) );
   i_match_B.reserve( min(i_A.size(), i_B.size()) );
-  
+
   vector<unsigned int>::const_iterator ait, bit;
   unsigned int i, j;
   i = 0;
@@ -1270,12 +1410,12 @@ void TemplatedLoopDetector<TDescriptor, F>::getMatches_neighratio(
     int best_j_now = -1;
     double best_dist_1 = 1e9;
     double best_dist_2 = 1e9;
-    
+
     j = 0;
     for(bit = i_B.begin(); bit != i_B.end(); ++bit, ++j)
     {
       double d = F::distance(A[*ait], B[*bit]);
-            
+
       // in i
       if(d < best_dist_1)
       {
@@ -1288,12 +1428,12 @@ void TemplatedLoopDetector<TDescriptor, F>::getMatches_neighratio(
         best_dist_2 = d;
       }
     }
-    
+
     if(best_dist_1 / best_dist_2 <= m_params.max_neighbor_ratio)
     {
       unsigned int idx_B = i_B[best_j_now];
       bit = find(i_match_B.begin(), i_match_B.end(), idx_B);
-      
+
       if(bit == i_match_B.end())
       {
         i_match_B.push_back(idx_B);
@@ -1308,7 +1448,7 @@ void TemplatedLoopDetector<TDescriptor, F>::getMatches_neighratio(
           i_match_A[ bit - i_match_B.begin() ] = *ait;
         }
       }
-        
+
     }
   }
 }
@@ -1320,15 +1460,15 @@ void TemplatedLoopDetector<TDescriptor, F>::removeLowScores(QueryResults &q,
   double threshold) const
 {
   // remember scores in q are in descending order now
-  //QueryResults::iterator qit = 
+  //QueryResults::iterator qit =
   //  lower_bound(q.begin(), q.end(), threshold, Result::geqv);
-  
+
   Result aux(0, threshold);
-  QueryResults::iterator qit = 
+  QueryResults::iterator qit =
     lower_bound(q.begin(), q.end(), aux, Result::geq);
-  
+
   // qit = first element < m_alpha_minus || end
-  
+
   if(qit != q.end())
   {
     int valid_entries = qit - q.begin();

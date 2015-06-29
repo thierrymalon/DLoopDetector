@@ -1,9 +1,10 @@
 cmake_minimum_required(VERSION 2.8)
 project(DLoopDetector)
 
+#list( APPEND CMAKE_CXX_FLAGS "-std=c++14 ${CMAKE_CXX_FLAGS} ")
+
 option(WITH_OPENMP      "Enable OpenMP multithreading"               ON)
-option(BUILD_DemoBRIEF  "Build demo application with BRIEF features" ON)
-option(BUILD_DemoSURF   "Build demo application with SURF features"  ON)
+option(BUILD_DemoSIFT   "Build demo application with SIFT features"  ON)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/.cmake")
 
 set(HDRS
@@ -26,17 +27,12 @@ if (WITH_OPENMP)
     endif(OPENMP_FOUND)
 endif(WITH_OPENMP)
 
-if(BUILD_DemoBRIEF)
-  add_executable(demo_brief demo/demo_brief.cpp)
-  target_link_libraries(demo_brief ${OpenCV_LIBS} ${DLIB_LIBRARIES} ${DBOW2_LIBRARIES})
-endif(BUILD_DemoBRIEF)
+if(BUILD_DemoSIFT)
+  add_executable(demo_sift demo/demo_sift.cpp)
+  target_link_libraries(demo_sift ${OpenCV_LIBS} ${DLIB_LIBRARIES} ${DBOW2_LIBRARIES})
+endif(BUILD_DemoSIFT)
 
-if(BUILD_DemoSURF)
-  add_executable(demo_surf demo/demo_surf.cpp)
-  target_link_libraries(demo_surf ${OpenCV_LIBS} ${DLIB_LIBRARIES} ${DBOW2_LIBRARIES})
-endif(BUILD_DemoSURF)
-
-if(BUILD_DemoBRIEF OR BUILD_DemoSURF)
+if(BUILD_DemoSIFT)
   set(RESOURCE_FILE ${CMAKE_BINARY_DIR}/resources.tar.gz)
   if(NOT EXISTS ${CMAKE_BINARY_DIR}/resources/)
     if(NOT EXISTS ${RESOURCE_FILE})
@@ -49,7 +45,7 @@ if(BUILD_DemoBRIEF OR BUILD_DemoSURF)
     execute_process(COMMAND ${CMAKE_COMMAND} -E tar xzf ${RESOURCE_FILE})
     file(REMOVE ${RESOURCE_FILE})
   endif(NOT EXISTS ${CMAKE_BINARY_DIR}/resources/)
-endif(BUILD_DemoBRIEF OR BUILD_DemoSURF)
+endif(BUILD_DemoSIFT)
 
 configure_file(src/DLoopDetector.cmake.in
   "${PROJECT_BINARY_DIR}/DLoopDetectorConfig.cmake" @ONLY)

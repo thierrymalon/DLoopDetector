@@ -15,7 +15,7 @@
  *
  * Written by Dorian Galvez-Lopez,
  * University of Zaragoza
- * 
+ *
  * Check my website to obtain updates: http://webdiis.unizar.es/~dorian
  *
  * \section requirements Requirements
@@ -26,7 +26,7 @@
  * If you use this software in academic works, please cite:
  <pre>
    @@ARTICLE{GalvezTRO12,
-    author={Galvez-Lopez, Dorian and Tardos, J. D.}, 
+    author={Galvez-Lopez, Dorian and Tardos, J. D.},
     journal={IEEE Transactions on Robotics},
     title={Bags of Binary Words for Fast Place Recognition in Image Sequences},
     year={2012},
@@ -40,10 +40,10 @@
  </pre>
  *
  * \section license License
- * This file is licensed under a Creative Commons 
- * Attribution-NonCommercial-ShareAlike 3.0 license. 
- * This file can be freely used and users can use, download and edit this file 
- * provided that credit is attributed to the original author. No users are 
+ * This file is licensed under a Creative Commons
+ * Attribution-NonCommercial-ShareAlike 3.0 license.
+ * This file can be freely used and users can use, download and edit this file
+ * provided that credit is attributed to the original author. No users are
  * permitted to use this file for commercial purposes unless explicit permission
  * is given by the original author. Derivative works must be licensed using the
  * same or similar license.
@@ -66,6 +66,11 @@ namespace DLoopDetector
 #include <DBoW2/DBoW2.h>
 #include <DBoW2/FSurf64.h>
 #include <DBoW2/FBrief.h>
+#include <DBoW2/FSift.h>
+
+/// SIFT Loop Detector
+typedef DLoopDetector::TemplatedLoopDetector
+  <FSift::TDescriptor, FSift> SiftLoopDetector;
 
 /// SURF64 Loop Detector
 typedef DLoopDetector::TemplatedLoopDetector
