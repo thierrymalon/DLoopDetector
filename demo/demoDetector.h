@@ -74,7 +74,8 @@ public:
    * @param extractor functor to extract features
    */
   void run(const std::string &name,
-    const FeatureExtractor<TDescriptor> &extractor);
+    const FeatureExtractor<TDescriptor> &extractor,
+    const std::string &db_path);
 
 protected:
 
@@ -111,7 +112,8 @@ demoDetector<TVocabulary, TDetector, TDescriptor>::demoDetector
 
 template<class TVocabulary, class TDetector, class TDescriptor>
 void demoDetector<TVocabulary, TDetector, TDescriptor>::run
-  (const std::string &name, const FeatureExtractor<TDescriptor> &extractor)
+  (const std::string &name, const FeatureExtractor<TDescriptor> &extractor,
+   const std::string &db_path)
 {
   cout << "DLoopDetector Demo" << endl
     << "Dorian Galvez-Lopez" << endl
@@ -162,15 +164,17 @@ void demoDetector<TVocabulary, TDetector, TDescriptor>::run
   cout << "Loading " << name << " vocabulary..." << endl;
   SiftVocabulary voc(m_vocfile);
 
-  SiftDatabase db;
-  db.load("/home/terry/datasetsNQueries/ImageDataset_CapitoleTLS/output/dbCapitoleDI.yml.gz");
+//  SiftDatabase db;
+//  db.load("/home/terry/datasetsNQueries/ImageDataset_CapitoleTLS/output/dbCapitoleDI.yml.gz");
+//  db.load(db_path);
 
   // Initiate loop detector with the vocabulary
   cout << "Processing sequence..." << endl;
   TDetector detector(voc, params);
 //  detector.setDatabase(db);
   detector.m_database = new SiftDatabase();
-  detector.m_database->load("/home/terry/datasetsNQueries/ImageDataset_CapitoleTLS/output/dbCapitoleDI.yml.gz");
+  detector.m_database->load(db_path);
+//  detector.m_database->load("/home/terry/datasetsNQueries/ImageDataset_CapitoleTLS/output/dbCapitoleDI.yml.gz");
 
   // Process images
   vector<cv::KeyPoint> keys;
@@ -179,6 +183,8 @@ void demoDetector<TVocabulary, TDetector, TDescriptor>::run
   // load image filenames
   vector<string> filenames =
     DUtils::FileFunctions::Dir(m_imagedir.c_str(), ".png", true);
+
+  cout << filenames.size() << endl;
 
   // load robot poses
   vector<double> xs, ys;
@@ -277,7 +283,7 @@ void demoDetector<TVocabulary, TDetector, TDescriptor>::run
     cout << count << " loops found in this image sequence!" << endl;
   }
 
-  cout << endl << "Execution time:" << endl
+  cout << endl << "Average execution time:" << endl
     << " - Feature computation: " << profiler.getMeanTime("features") * 1e3
     << " ms/image" << endl
     << " - Loop detection: " << profiler.getMeanTime("detection") * 1e3

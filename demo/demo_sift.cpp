@@ -31,10 +31,17 @@ using namespace std;
 
 // ----------------------------------------------------------------------------
 
+const char* keys =
+"{h | help      | false | print this message                                            }"
+"{q | query     | ./resources/images | path to the directory containing query images    }"
+"{v | vocName   | ../vocNdb/vocCapitoleDI.yml.gz | name of the vocabulary file       }"
+"{b | dbName    | ../vocNdb/dbCapitoleDI.yml.gz  | name of the database file         }"
+"{p | poseFile  | ./resources/pose.txt              | path to the pose file             }"
+;
+
+// ----------------------------------------------------------------------------
+
 //static const char *VOC_FILE = "./resources/surf64_k10L6.voc.gz";
-static const char *VOC_FILE = "/home/terry/datasetsNQueries/ImageDataset_CapitoleTLS/output/vocCapitoleDI.yml.gz";
-static const char *IMAGE_DIR = "./resources/images";
-static const char *POSE_FILE = "./resources/pose.txt";
 static const int IMAGE_W = 640; // image size
 static const int IMAGE_H = 480;
 
@@ -56,8 +63,26 @@ public:
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-int main()
+int main(int argc, const char **argv)
 {
+  cv::CommandLineParser parser(argc, argv, keys);
+  if (parser.get<bool>("h") || parser.get<bool>("help"))
+  {
+    parser.printParams();
+    return EXIT_SUCCESS;
+  }
+
+  parser.printParams();
+  static string VOC_FILE = parser.get<string>("v");
+  static string DB_FILE = parser.get<string>("b");
+  static string IMAGE_DIR = parser.get<string>("q");
+  static string  POSE_FILE = parser.get<string>("p");
+
+  std::cout << IMAGE_DIR << std::endl;
+  std::cout << VOC_FILE  << std::endl;
+  std::cout << DB_FILE   << std::endl;
+  std::cout << POSE_FILE << std::endl;
+
   // prepares the demo
   demoDetector<SiftVocabulary, SiftLoopDetector, FSift::TDescriptor>
     demo(VOC_FILE, IMAGE_DIR, POSE_FILE, IMAGE_W, IMAGE_H);
@@ -66,7 +91,7 @@ int main()
   {
     // run the demo with the given functor to extract features
     SiftExtractor extractor;
-    demo.run("SIFT", extractor);
+    demo.run("SIFT", extractor, DB_FILE);
   }
   catch(const std::string &ex)
   {
