@@ -32,20 +32,16 @@ using namespace std;
 // ----------------------------------------------------------------------------
 
 const char* keys =
-"{h | help      | false | print this message                                            }"
-"{q | query     | ./resources/images | path to the directory containing query images    }"
+"{h | help      | false | print this message                                         }"
+"{q | query     | ./resources/images | path to the directory containing query images }"
 "{v | vocName   | ../vocNdb/vocCapitoleDI.yml.gz | name of the vocabulary file       }"
 "{b | dbName    | ../vocNdb/dbCapitoleDI.yml.gz  | name of the database file         }"
-"{p | poseFile  | ./resources/pose.txt              | path to the pose file             }"
+"{p | poseFile  | ./resources/pose.txt              | path to the pose file          }"
+"{W | width     | 640 | images width                                                 }"
+"{H | height    | 480 | images height                                                }"
 ;
 
 // ----------------------------------------------------------------------------
-
-//static const char *VOC_FILE = "./resources/surf64_k10L6.voc.gz";
-static const int IMAGE_W = 640; // image size
-static const int IMAGE_H = 480;
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 /// This functor extracts SIFT descriptors in the required format
 class SiftExtractor: public FeatureExtractor<FSift::TDescriptor>
@@ -78,10 +74,8 @@ int main(int argc, const char **argv)
   static string IMAGE_DIR = parser.get<string>("q");
   static string  POSE_FILE = parser.get<string>("p");
 
-  std::cout << IMAGE_DIR << std::endl;
-  std::cout << VOC_FILE  << std::endl;
-  std::cout << DB_FILE   << std::endl;
-  std::cout << POSE_FILE << std::endl;
+  static const int IMAGE_W = parser.get<int>("W");
+  static const int IMAGE_H = parser.get<int>("H");
 
   // prepares the demo
   demoDetector<SiftVocabulary, SiftLoopDetector, FSift::TDescriptor>
