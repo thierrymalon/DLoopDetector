@@ -898,8 +898,6 @@ bool TemplatedLoopDetector<TDescriptor, F>::detectLoopDB(
   QueryResults qret;
   m_database->query(bowvec, qret, 10, -1);//m_params.max_db_results, max_id);
 
-  cout << qret << endl;
-
   if(!qret.empty())
   {
     // factor to compute normalized similarity score, if necessary
@@ -910,7 +908,7 @@ bool TemplatedLoopDetector<TDescriptor, F>::detectLoopDB(
       ns_factor = m_database->getVocabulary()->score(bowvec, m_last_bowvec);
     }
 
-    if(!m_params.use_nss || ns_factor >= m_params.min_nss_factor)
+    if(1) //m_params.use_nss || ns_factor >= m_params.min_nss_factor)
     {
       // scores in qret must be divided by ns_factor to obtain the
       // normalized similarity score, but we can
@@ -918,8 +916,7 @@ bool TemplatedLoopDetector<TDescriptor, F>::detectLoopDB(
 
       // remove those scores whose nss is lower than alpha
       // (ret is sorted in descending score order now)
-      removeLowScores(qret, m_params.alpha * ns_factor);
-
+//      removeLowScores(qret, m_params.alpha * ns_factor);
       if(!qret.empty())
       {
         // the best candidate is the one with highest score by now
@@ -979,22 +976,25 @@ bool TemplatedLoopDetector<TDescriptor, F>::detectLoopDB(
 
   // update record
   // m_image_keys and m_image_descriptors have the same length
-  if(m_image_keys.size() == entry_id)
-  {
-    m_image_keys.push_back(keys);
-    m_image_descriptors.push_back(descriptors);
-  }
-  else
-  {
-    m_image_keys[entry_id] = keys;
-    m_image_descriptors[entry_id] = descriptors;
-  }
+//cout << m_image_keys.size() << endl;
+//  if(1)//m_image_keys.size() == entry_id)
+//  {
+//    m_image_keys.push_back(keys);
+//    m_image_descriptors.push_back(descriptors);
+//  }
+//  else
+//  {
+//    m_image_keys[entry_id] = keys;
+//    m_image_descriptors[entry_id] = descriptors;
+//  }
 
   // store this bowvec if we are going to use it in next iteratons
   if(m_params.use_nss && (int)entry_id + 1 > m_params.dislocal)
   {
     m_last_bowvec = bowvec;
   }
+
+  std::cout << qret << std::endl;
 
   return match.detection();
 }

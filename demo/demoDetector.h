@@ -174,6 +174,7 @@ void demoDetector<TVocabulary, TDetector, TDescriptor>::run
 //  detector.setDatabase(db);
   detector.m_database = new SiftDatabase();
   detector.m_database->load(db_path);
+  std::cout << *detector.m_database << std::endl;
 //  detector.m_database->load("/home/terry/datasetsNQueries/ImageDataset_CapitoleTLS/output/dbCapitoleDI.yml.gz");
 
   // Process images
@@ -182,7 +183,11 @@ void demoDetector<TVocabulary, TDetector, TDescriptor>::run
 
   // load image filenames
   vector<string> filenames =
-    DUtils::FileFunctions::Dir(m_imagedir.c_str(), ".png", true);
+    DUtils::FileFunctions::Dir(m_imagedir.c_str(), ".JPG", true);
+
+  if (filenames.size() == 0) {
+    filenames = DUtils::FileFunctions::Dir(m_imagedir.c_str(), ".png", true);
+  }
 
   cout << filenames.size() << endl;
 

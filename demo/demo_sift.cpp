@@ -108,12 +108,13 @@ void SiftExtractor::operator() (const cv::Mat &im,
   sift_detector(im, mask, keys, plain);
 
   // change descriptor format
-  descriptors.resize((plain.dataend - plain.datastart) / 128);
+  descriptors.resize(keys.size());
   unsigned int j = 0;
-  for(unsigned int i = 0; i < plain.dataend - plain.datastart; i += 128, ++j)
+  for (unsigned int i = 0; i < keys.size(); ++i)
   {
-    descriptors[j].resize(128);
-    descriptors[j].assign(plain.datastart + i, plain.datastart + i + 128);
+    descriptors[i].resize(128);
+    plain.row(i).copyTo(descriptors[i]);
+//    descriptors[j].assign(plain.datastart + i, plain.datastart + i + 128);
   }
 
   // Root SIFT
