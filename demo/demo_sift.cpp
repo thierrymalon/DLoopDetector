@@ -33,12 +33,15 @@ using namespace std;
 
 const char* keys =
 "{h | help      | false | print this message                                         }"
+"{d | descFiles |       | .desc files to retrieve the images descriptors             }"
 "{q | query     | ./resources/images | path to the directory containing query images }"
 "{v | vocName   | ../vocNdb/vocCapitoleDI.yml.gz | name of the vocabulary file       }"
 "{b | dbName    | ../vocNdb/dbCapitoleDI.yml.gz  | name of the database file         }"
-"{p | poseFile  | ./resources/pose.txt              | path to the pose file          }"
+"{p | poseFile  | ./resources/pose.txt           | path to the pose file             }"
 "{W | width     | 640 | images width                                                 }"
 "{H | height    | 480 | images height                                                }"
+"{i | di_lvl    | 0 | desired direct index level                                     }"
+"{l | list   | ./resources/list.txt | list of used images to build the voctree and db}"
 ;
 
 // ----------------------------------------------------------------------------
@@ -71,21 +74,24 @@ int main(int argc, const char **argv)
   parser.printParams();
   static string VOC_FILE = parser.get<string>("v");
   static string DB_FILE = parser.get<string>("b");
+  static string DESC_DIR = parser.get<string>("d");
   static string IMAGE_DIR = parser.get<string>("q");
-  static string  POSE_FILE = parser.get<string>("p");
+  static string POSE_FILE = parser.get<string>("p");
+  static string LIST_FILE = parser.get<string>("l");
 
   static const int IMAGE_W = parser.get<int>("W");
   static const int IMAGE_H = parser.get<int>("H");
+  int di_lvl = parser.get<int>("i");
 
   // prepares the demo
   demoDetector<SiftVocabulary, SiftLoopDetector, FSift::TDescriptor>
-    demo(VOC_FILE, IMAGE_DIR, POSE_FILE, IMAGE_W, IMAGE_H);
+    demo(VOC_FILE, IMAGE_DIR, DESC_DIR, POSE_FILE, IMAGE_W, IMAGE_H);
 
   try
   {
     // run the demo with the given functor to extract features
     SiftExtractor extractor;
-    demo.run("SIFT", extractor, DB_FILE);
+    demo.run("SIFT", extractor, DB_FILE, di_lvl, LIST_FILE);
   }
   catch(const std::string &ex)
   {

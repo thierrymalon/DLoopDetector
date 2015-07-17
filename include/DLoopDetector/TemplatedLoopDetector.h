@@ -274,7 +274,7 @@ public:
    */
   bool detectLoopDB(const std::vector<cv::KeyPoint> &keys,
     const std::vector<TDescriptor> &descriptors,
-    DetectionResult &match);
+    DetectionResult &match, vector<unsigned int> mapping);
 
 
   /**
@@ -456,7 +456,8 @@ protected:
   bool isGeometricallyConsistent_DI(EntryId old_entry,
     const std::vector<cv::KeyPoint> &keys,
     const std::vector<TDescriptor> &descriptors,
-    const FeatureVector &curvec) const;
+    const FeatureVector &curvec,
+    std::vector<unsigned int> mapping) const;
 
   /**
    * Checks if an old entry is geometrically consistent (by using FLANN and
@@ -683,7 +684,7 @@ void TemplatedLoopDetector<TDescriptor,F>::allocate
     }
   }
 
-  m_database->allocate(nentries, nkeys);
+  m_database->allocate(nentries, 0); //nkeys);
 }
 
 // --------------------------------------------------------------------------
@@ -879,7 +880,7 @@ template<class TDescriptor, class F>
 bool TemplatedLoopDetector<TDescriptor, F>::detectLoopDB(
   const std::vector<cv::KeyPoint> &keys,
   const std::vector<TDescriptor> &descriptors,
-  DetectionResult &match)
+  DetectionResult &match, vector<unsigned int> mapping)
 {
   EntryId entry_id = m_database->size();
   match.query = entry_id;
@@ -900,95 +901,49 @@ bool TemplatedLoopDetector<TDescriptor, F>::detectLoopDB(
 
   if(!qret.empty())
   {
-    // factor to compute normalized similarity score, if necessary
-    double ns_factor = 1.0;
+    // the best candidate is the one with highest score by now
+    match.match = qret[0].Id;
+    bool detection;
 
-    if(m_params.use_nss)
+    if(m_params.geom_check == GEOM_DI)
     {
-      ns_factor = m_database->getVocabulary()->score(bowvec, m_last_bowvec);
+      // all the DI stuff is implicit in the database
+      detection = isGeometricallyConsistent_DI(match.match,
+        keys, descriptors, featvec, mapping);
+    }
+    else if(m_params.geom_check == GEOM_FLANN)
+    {
+      cv::FlannBasedMatcher flann_structure;
+      getFlannStructure(descriptors, flann_structure);
+
+      detection = isGeometricallyConsistent_Flann(match.match,
+        keys, descriptors, flann_structure);
+    }
+    else if(m_params.geom_check == GEOM_EXHAUSTIVE)
+    {
+      detection = isGeometricallyConsistent_Exhaustive(
+        m_image_keys[match.match],
+        m_image_descriptors[match.match],
+        keys, descriptors);
+    }
+    else // GEOM_NONE, accept the match
+    {
+      detection = true;
     }
 
-    if(1) //m_params.use_nss || ns_factor >= m_params.min_nss_factor)
+    if(detection)
     {
-      // scores in qret must be divided by ns_factor to obtain the
-      // normalized similarity score, but we can
-      // speed this up by moving ns_factor to alpha's
-
-      // remove those scores whose nss is lower than alpha
-      // (ret is sorted in descending score order now)
-//      removeLowScores(qret, m_params.alpha * ns_factor);
-      if(!qret.empty())
-      {
-        // the best candidate is the one with highest score by now
-        match.match = qret[0].Id;
-
-        bool detection;
-
-        if(m_params.geom_check == GEOM_DI)
-        {
-          // all the DI stuff is implicit in the database
-          detection = isGeometricallyConsistent_DI(match.match,
-              keys, descriptors, featvec);
-        }
-        else if(m_params.geom_check == GEOM_FLANN)
-        {
-          cv::FlannBasedMatcher flann_structure;
-          getFlannStructure(descriptors, flann_structure);
-
-          detection = isGeometricallyConsistent_Flann(match.match,
-            keys, descriptors, flann_structure);
-        }
-        else if(m_params.geom_check == GEOM_EXHAUSTIVE)
-        {
-          detection = isGeometricallyConsistent_Exhaustive(
-            m_image_keys[match.match],
-            m_image_descriptors[match.match],
-            keys, descriptors);
-        }
-        else // GEOM_NONE, accept the match
-        {
-          detection = true;
-        }
-
-        if(detection)
-        {
-          match.status = LOOP_DETECTED;
-        }
-        else
-        {
-          match.status = NO_GEOMETRICAL_CONSISTENCY;
-        }
-      } // if !qret empty after removing low scores
-      else
-      {
-        match.status = LOW_SCORES;
-      }
-    } // if (ns_factor > min normal score)
+      match.status = LOOP_DETECTED;
+    }
     else
     {
-      match.status = LOW_NSS_FACTOR;
+      match.status = NO_GEOMETRICAL_CONSISTENCY;
     }
-  } // if(!qret.empty())
+  } // if !qret empty after removing low scores
   else
   {
-    match.status = NO_DB_RESULTS;
+    match.status = LOW_SCORES;
   }
-
-  // update record
-  // m_image_keys and m_image_descriptors have the same length
-//cout << m_image_keys.size() << endl;
-//  if(1)//m_image_keys.size() == entry_id)
-//  {
-//    m_image_keys.push_back(keys);
-//    m_image_descriptors.push_back(descriptors);
-//  }
-//  else
-//  {
-//    m_image_keys[entry_id] = keys;
-//    m_image_descriptors[entry_id] = descriptors;
-//  }
-
-  // store this bowvec if we are going to use it in next iteratons
   if(m_params.use_nss && (int)entry_id + 1 > m_params.dislocal)
   {
     m_last_bowvec = bowvec;
@@ -1145,7 +1100,7 @@ template<class TDescriptor, class F>
 bool TemplatedLoopDetector<TDescriptor, F>::isGeometricallyConsistent_DI(
   EntryId old_entry, const std::vector<cv::KeyPoint> &keys,
   const std::vector<TDescriptor> &descriptors,
-  const FeatureVector &bowvec) const
+  const FeatureVector &bowvec, std::vector<unsigned int> mapping) const
 {
   const FeatureVector &oldvec = m_database->retrieveFeatures(old_entry);
 
@@ -1169,8 +1124,19 @@ bool TemplatedLoopDetector<TDescriptor, F>::isGeometricallyConsistent_DI(
       // features cur_it->second of keys
       vector<unsigned int> i_old_now, i_cur_now;
 
+//      std::cout << "m_image_desc.size() = " << m_image_descriptors.size() << std::endl;
+//      std::cout << "A = m_image_desc[" << old_entry << "].size() = " << m_image_descriptors[old_entry].size() << std::endl;
+//      for (unsigned int kk = 0; kk < old_it -> second.size() ; ++kk)
+//          std::cout << "i_A = " << old_it->second[kk]<< std::endl;
+//
+//
+//      std::cout << "descriptors = B and B.size() = " << descriptors.size() << std::endl;
+//      for (unsigned int kk = 0; kk < cur_it -> second.size() ; ++kk)
+//          std::cout << "i_B = " << cur_it->second[kk]<< std::endl;
+
+
       getMatches_neighratio(
-        m_image_descriptors[old_entry], old_it->second,
+        m_image_descriptors[mapping[old_entry]], old_it->second,
         descriptors, cur_it->second,
         i_old_now, i_cur_now);
 
@@ -1207,7 +1173,7 @@ bool TemplatedLoopDetector<TDescriptor, F>::isGeometricallyConsistent_DI(
 
     for(; oit != i_old.end(); ++oit, ++cit)
     {
-      const cv::KeyPoint &old_k = m_image_keys[old_entry][*oit];
+      const cv::KeyPoint &old_k = m_image_keys[mapping[old_entry]][*oit];
       const cv::KeyPoint &cur_k = keys[*cit];
 
       old_points.push_back(old_k.pt);
@@ -1401,6 +1367,7 @@ void TemplatedLoopDetector<TDescriptor, F>::getMatches_neighratio(
   i_match_B.resize(0);
   i_match_A.reserve( min(i_A.size(), i_B.size()) );
   i_match_B.reserve( min(i_A.size(), i_B.size()) );
+
 
   vector<unsigned int>::const_iterator ait, bit;
   unsigned int i, j;
